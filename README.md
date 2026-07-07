@@ -1,6 +1,6 @@
 # ProxyMedic 🩺
 
-**Find out exactly why your Janitor AI proxy isn't working — in 10 seconds.**
+**Find out exactly why your Janitor AI proxy isn't working, in 10 seconds.**
 
 Live: **https://android-tipster.github.io/proxymedic/**
 
@@ -8,16 +8,16 @@ Janitor AI (and most roleplay frontends) show the same useless message for every
 
 ## What it does
 
-Paste the three things from Janitor's proxy form — **Proxy URL, API key, model name** — and get:
+Paste the three things from Janitor's proxy form (**Proxy URL, API key, model name**) and get:
 
-- **Mismatch detection** — the #1 cause of "network error" is a key from one provider with a URL from another (a DeepSeek key on openrouter.ai, an OpenRouter key on api.deepseek.com). ProxyMedic fingerprints both and calls it out.
-- **URL repair** — base URL instead of the full `/chat/completions` endpoint, `http://`, `/chat/completion` typos, model-list endpoints, or a *website* pasted instead of an API (chat.deepseek.com, janitorai.com itself).
-- **Model-name validation** — vendor-prefix rules per provider (`deepseek/deepseek-v3.2` on OpenRouter vs `deepseek-v4-flash` on DeepSeek direct), fuzzy "did you mean", and **stale-tutorial detection**: DeepSeek's `deepseek-chat` / `deepseek-reasoner` names stop working on **July 24, 2026** — ProxyMedic warns with a countdown and gives the replacement.
-- **Hidden-character detection** — trailing spaces, zero-width characters, line-wrapped keys, `Bearer ` pasted into the key field. Mobile copy-paste classics.
-- **Live test** — one real request (max 1 token) straight from *your* browser to *your* provider. Auth, balance, rate-limit and model errors come back classified in plain English, with the provider's live model list checked on the way.
-- **Error decoder** — paste whatever error you got and get the cause + fix. Knows the real error strings from OpenRouter, DeepSeek, Gemini, Groq, Mistral, Chutes, OpenAI and Janitor itself.
-- **Corrected config card** — copy-paste-ready values that match Janitor's form fields exactly.
-- **Shareable diagnosis** — one tap copies a key-redacted summary for Reddit/Discord help threads.
+- **Mismatch detection**: the #1 cause of "network error" is a key from one provider with a URL from another (a DeepSeek key on openrouter.ai, an OpenRouter key on api.deepseek.com). ProxyMedic fingerprints both and calls it out.
+- **URL repair**: base URL instead of the full `/chat/completions` endpoint, `http://`, `/chat/completion` typos, model-list endpoints, or a *website* pasted instead of an API (chat.deepseek.com, janitorai.com itself).
+- **Model-name validation**: vendor-prefix rules per provider (`deepseek/deepseek-v3.2` on OpenRouter vs `deepseek-v4-flash` on DeepSeek direct), fuzzy "did you mean", and **stale-tutorial detection**: DeepSeek's `deepseek-chat` / `deepseek-reasoner` names stop working on **July 24, 2026**. ProxyMedic warns with a countdown and gives the replacement.
+- **Hidden-character detection**: trailing spaces, zero-width characters, line-wrapped keys, `Bearer ` pasted into the key field. Mobile copy-paste classics.
+- **Live test**: one real request (max 1 token) straight from *your* browser to *your* provider. Auth, balance, rate-limit and model errors come back classified in plain English, with the provider's live model list checked on the way.
+- **Error decoder**: paste whatever error you got and get the cause + fix. Knows the real error strings from OpenRouter, DeepSeek, Gemini, Groq, Mistral, Chutes, OpenAI and Janitor itself.
+- **Corrected config card**: copy-paste-ready values that match Janitor's form fields exactly.
+- **Shareable diagnosis**: one tap copies a key-redacted summary for Reddit/Discord help threads.
 
 ## Privacy
 

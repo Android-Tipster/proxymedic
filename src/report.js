@@ -122,11 +122,11 @@ export function diagnose({ url, key, model }, { liveCatalog = null, now = Date.n
 // Shareable plain-text summary for Reddit/Discord help threads. Never includes the key.
 export function shareText(result, { url, model }) {
   const lines = [];
-  lines.push('ProxyMedic diagnosis (proxymedic — free, runs in your browser, key never leaves it)');
+  lines.push('ProxyMedic diagnosis (proxymedic: free, runs in your browser, key never leaves it)');
   lines.push(`URL: ${url || '(empty)'}`);
   lines.push(`Model: ${model || '(empty)'}`);
   lines.push(`Key: ${result.keyFp && result.keyFp.provider ? result.keyFp.provider.name + '-format key (redacted)' : '(redacted)'}`);
-  lines.push(`Verdict: ${result.verdict.toUpperCase()} — ${result.blockers} blocker(s), ${result.warnings} warning(s)`);
+  lines.push(`Verdict: ${result.verdict.toUpperCase()}: ${result.blockers} blocker(s), ${result.warnings} warning(s)`);
   for (const f of result.findings) {
     if (f.severity === 'blocker' || f.severity === 'warning') {
       lines.push(`- [${f.severity.toUpperCase()}] ${f.title}`);
