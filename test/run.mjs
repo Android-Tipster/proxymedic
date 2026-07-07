@@ -156,6 +156,9 @@ const NOW_AFTER = Date.UTC(2026, 7, 1);    // Aug 1 2026, after cutoff
   ok(decodeError('', 503).some(r => r.code === 'err-503-overloaded'), 'decode: bare 503 status fallback');
   ok(decodeError('unsupported_country_region_territory').some(r => r.code === 'err-403-region'), 'decode: region block');
   ok(decodeError('your input was flagged by moderation').some(r => r.code === 'err-403-moderation'), 'decode: moderation');
+  ok(decodeError('net::ERR_TIMED_OUT').some(r => r.code === 'err-timeout'), 'decode: timed out');
+  ok(decodeError('You exceeded your current quota: insufficient_quota').some(r => r.code === 'err-insufficient-quota'), 'decode: insufficient quota');
+  ok(decodeError('Provider returned error').some(r => r.code === 'err-provider-returned'), 'decode: provider returned error');
   const cls = classifyResponse(200, '{"choices":[{"message":{"content":"hi"}}]}', PROVIDERS.openrouter);
   ok(cls.length === 1 && cls[0].code === 'live-ok', 'classify: 200 ok');
   const cls2 = classifyResponse(401, '{"error":{"message":"User not found.","code":401}}', PROVIDERS.openrouter);

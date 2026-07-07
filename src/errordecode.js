@@ -131,6 +131,27 @@ const RULES = [
     fix: 'Switch to a non-reasoning model (deepseek-v4-flash instead of the reasoner) or ignore/delete the think block. Nothing is broken.'
   },
   {
+    code: 'err-timeout',
+    match: /err_timed_out|timed? ?out|took too long/i,
+    title: 'The request timed out',
+    cause: 'The server accepted the connection but never answered in time. Reasoning models are slow by design, and community reverse proxies stall when their upstream is dead or saturated.',
+    fix: 'Retry once. If you are on a reasoning model (R1, deepseek-reasoner style), try the non-reasoning variant. On a community proxy, the proxy is the bottleneck.'
+  },
+  {
+    code: 'err-insufficient-quota',
+    match: /insufficient_quota|insufficient quota/i,
+    title: 'The account has no usable quota',
+    cause: 'The key is valid but the account behind it has no credits or its plan quota ran out. Common with OpenAI keys that were created without ever adding billing.',
+    fix: 'Open the provider\'s billing page and add credits, or switch to a provider with a real free tier (Gemini, or OpenRouter :free models).'
+  },
+  {
+    code: 'err-provider-returned',
+    match: /provider returned error|upstream error|error from provider/i,
+    title: 'The routing service\'s upstream provider failed',
+    cause: 'Your setup reached the router (e.g. OpenRouter) fine, but the actual model host behind it errored. This is on their side, not yours.',
+    fix: 'Retry, or pick a different model/variant. On OpenRouter you can also try the same model from a different vendor listing.'
+  },
+  {
     code: 'err-context-length',
     match: /context length|maximum context|context_length_exceeded|too many tokens|reduce the length/i,
     title: 'The chat is too long for the model',

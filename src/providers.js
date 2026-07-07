@@ -21,6 +21,7 @@ export const PROVIDERS = {
     modelFormat: 'vendor/model',
     modelNeedsSlash: true,
     corsOk: true,
+    presetModel: 'meta-llama/llama-3.3-70b-instruct:free',
     // static snapshot from the live /models endpoint, 2026-07-07 (fallback when offline)
     modelSnapshot: [
       'deepseek/deepseek-v4-pro', 'deepseek/deepseek-v4-flash', 'deepseek/deepseek-v3.2',

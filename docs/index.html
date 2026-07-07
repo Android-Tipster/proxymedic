@@ -70,7 +70,7 @@
   --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   background: radial-gradient(1200px 600px at 70% -10%, #2a1f4d 0%, var(--bg) 55%);
   color: var(--text);
@@ -92,7 +92,7 @@ header { text-align: center; padding: 28px 0 8px; }
 .tab {
   flex: 1; padding: 11px 8px; text-align: center; border-radius: var(--radius);
   background: var(--bg2); color: var(--muted); font-weight: 600; font-size: 0.95rem;
-  border: 1px solid #2c2547; cursor: pointer; user-select: none;
+  border: 1px solid #2c2547; cursor: pointer; -webkit-user-select: none; user-select: none;
 }
 .tab.active { background: var(--card2); color: var(--text); border-color: var(--accent); }
 .panel { display: none; }
@@ -101,6 +101,16 @@ header { text-align: center; padding: 28px 0 8px; }
   background: var(--card); border: 1px solid #2c2547; border-radius: var(--radius);
   padding: 18px 16px; margin-bottom: 14px;
 }
+.presets { margin-bottom: 16px; }
+.presets-label { display: block; color: var(--muted); font-size: 0.82rem; margin-bottom: 8px; }
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid #3a3160; background: var(--bg2); color: var(--text);
+  border-radius: 999px; padding: 7px 13px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+}
+.chip:hover, .chip:focus { border-color: var(--accent); color: var(--accent); }
+.preset-note { margin-top: 10px; font-size: 0.84rem; color: var(--ok); }
+.preset-note a { color: var(--accent); }
 label { display: block; font-weight: 600; font-size: 0.9rem; margin: 14px 0 5px; }
 label:first-child { margin-top: 0; }
 label .hint { color: var(--muted); font-weight: 400; font-size: 0.82rem; }
@@ -189,6 +199,14 @@ footer a { color: var(--accent); text-decoration: none; }
 
   <div class="panel active" id="panel-diagnose">
     <div class="card">
+      <div class="presets">
+        <span class="presets-label">Starting fresh? Pre-fill a known-good setup:</span>
+        <div class="preset-row">
+          <button type="button" class="chip" data-preset="openrouter">OpenRouter (has free models)</button>
+          <button type="button" class="chip" data-preset="deepseek">DeepSeek (paid, cheap)</button>
+          <button type="button" class="chip" data-preset="google">Gemini (free tier)</button>
+        </div>
+      </div>
       <label for="in-url">Proxy URL <span class="hint">what you put in Janitor's "Proxy URL" field</span></label>
       <input type="text" id="in-url" placeholder="https://openrouter.ai/api/v1/chat/completions" autocomplete="off" spellcheck="false">
       <label for="in-key">API key <span class="hint">checked locally, sent only to your own provider if you run the live test</span></label>
@@ -270,6 +288,7 @@ const PROVIDERS = {
     modelFormat: 'vendor/model',
     modelNeedsSlash: true,
     corsOk: true,
+    presetModel: 'meta-llama/llama-3.3-70b-instruct:free',
     // static snapshot from the live /models endpoint, 2026-07-07 (fallback when offline)
     modelSnapshot: [
       'deepseek/deepseek-v4-pro', 'deepseek/deepseek-v4-flash', 'deepseek/deepseek-v3.2',
@@ -978,6 +997,27 @@ const RULES = [
     fix: 'Switch to a non-reasoning model (deepseek-v4-flash instead of the reasoner) or ignore/delete the think block. Nothing is broken.'
   },
   {
+    code: 'err-timeout',
+    match: /err_timed_out|timed? ?out|took too long/i,
+    title: 'The request timed out',
+    cause: 'The server accepted the connection but never answered in time. Reasoning models are slow by design, and community reverse proxies stall when their upstream is dead or saturated.',
+    fix: 'Retry once. If you are on a reasoning model (R1, deepseek-reasoner style), try the non-reasoning variant. On a community proxy, the proxy is the bottleneck.'
+  },
+  {
+    code: 'err-insufficient-quota',
+    match: /insufficient_quota|insufficient quota/i,
+    title: 'The account has no usable quota',
+    cause: 'The key is valid but the account behind it has no credits or its plan quota ran out. Common with OpenAI keys that were created without ever adding billing.',
+    fix: 'Open the provider\'s billing page and add credits, or switch to a provider with a real free tier (Gemini, or OpenRouter :free models).'
+  },
+  {
+    code: 'err-provider-returned',
+    match: /provider returned error|upstream error|error from provider/i,
+    title: 'The routing service\'s upstream provider failed',
+    cause: 'Your setup reached the router (e.g. OpenRouter) fine, but the actual model host behind it errored. This is on their side, not yours.',
+    fix: 'Retry, or pick a different model/variant. On OpenRouter you can also try the same model from a different vendor listing.'
+  },
+  {
     code: 'err-context-length',
     match: /context length|maximum context|context_length_exceeded|too many tokens|reduce the length/i,
     title: 'The chat is too long for the model',
@@ -1481,6 +1521,24 @@ return { sortFindings, diagnose, shareText };
       setTimeout(() => { els.share.textContent = 'Copy diagnosis for a help thread (key redacted)'; }, 2200);
     } catch { /* clipboard denied */ }
   }
+
+  // Quick-start presets: fill a known-good URL + model, user only adds the key.
+  document.querySelectorAll('.chip[data-preset]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const p = PM.providers.PROVIDERS[chip.dataset.preset];
+      if (!p) return;
+      els.url.value = p.chatUrl;
+      els.model.value = p.presetModel || p.modelSnapshot[0];
+      let note = document.querySelector('.preset-note');
+      if (!note) {
+        note = document.createElement('div');
+        note.className = 'preset-note';
+        chip.closest('.presets').appendChild(note);
+      }
+      note.innerHTML = `URL and model filled for ${esc(p.name)}. Now paste your key from <a href="${esc(p.keysPage)}" target="_blank" rel="noopener">${esc(p.keysPage.replace('https://', ''))}</a> and hit Diagnose.`;
+      els.key.focus();
+    });
+  });
 
   els.diagnose.addEventListener('click', runDiagnosis);
   els.livetest.addEventListener('click', runLiveTest);

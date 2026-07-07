@@ -178,6 +178,24 @@
     } catch { /* clipboard denied */ }
   }
 
+  // Quick-start presets: fill a known-good URL + model, user only adds the key.
+  document.querySelectorAll('.chip[data-preset]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const p = PM.providers.PROVIDERS[chip.dataset.preset];
+      if (!p) return;
+      els.url.value = p.chatUrl;
+      els.model.value = p.presetModel || p.modelSnapshot[0];
+      let note = document.querySelector('.preset-note');
+      if (!note) {
+        note = document.createElement('div');
+        note.className = 'preset-note';
+        chip.closest('.presets').appendChild(note);
+      }
+      note.innerHTML = `URL and model filled for ${esc(p.name)}. Now paste your key from <a href="${esc(p.keysPage)}" target="_blank" rel="noopener">${esc(p.keysPage.replace('https://', ''))}</a> and hit Diagnose.`;
+      els.key.focus();
+    });
+  });
+
   els.diagnose.addEventListener('click', runDiagnosis);
   els.livetest.addEventListener('click', runLiveTest);
   els.decode.addEventListener('click', runDecode);

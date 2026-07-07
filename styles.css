@@ -15,7 +15,7 @@
   --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   background: radial-gradient(1200px 600px at 70% -10%, #2a1f4d 0%, var(--bg) 55%);
   color: var(--text);
@@ -37,7 +37,7 @@ header { text-align: center; padding: 28px 0 8px; }
 .tab {
   flex: 1; padding: 11px 8px; text-align: center; border-radius: var(--radius);
   background: var(--bg2); color: var(--muted); font-weight: 600; font-size: 0.95rem;
-  border: 1px solid #2c2547; cursor: pointer; user-select: none;
+  border: 1px solid #2c2547; cursor: pointer; -webkit-user-select: none; user-select: none;
 }
 .tab.active { background: var(--card2); color: var(--text); border-color: var(--accent); }
 .panel { display: none; }
@@ -46,6 +46,16 @@ header { text-align: center; padding: 28px 0 8px; }
   background: var(--card); border: 1px solid #2c2547; border-radius: var(--radius);
   padding: 18px 16px; margin-bottom: 14px;
 }
+.presets { margin-bottom: 16px; }
+.presets-label { display: block; color: var(--muted); font-size: 0.82rem; margin-bottom: 8px; }
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid #3a3160; background: var(--bg2); color: var(--text);
+  border-radius: 999px; padding: 7px 13px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+}
+.chip:hover, .chip:focus { border-color: var(--accent); color: var(--accent); }
+.preset-note { margin-top: 10px; font-size: 0.84rem; color: var(--ok); }
+.preset-note a { color: var(--accent); }
 label { display: block; font-weight: 600; font-size: 0.9rem; margin: 14px 0 5px; }
 label:first-child { margin-top: 0; }
 label .hint { color: var(--muted); font-weight: 400; font-size: 0.82rem; }

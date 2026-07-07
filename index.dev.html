@@ -69,6 +69,14 @@
 
   <div class="panel active" id="panel-diagnose">
     <div class="card">
+      <div class="presets">
+        <span class="presets-label">Starting fresh? Pre-fill a known-good setup:</span>
+        <div class="preset-row">
+          <button type="button" class="chip" data-preset="openrouter">OpenRouter (has free models)</button>
+          <button type="button" class="chip" data-preset="deepseek">DeepSeek (paid, cheap)</button>
+          <button type="button" class="chip" data-preset="google">Gemini (free tier)</button>
+        </div>
+      </div>
       <label for="in-url">Proxy URL <span class="hint">what you put in Janitor's "Proxy URL" field</span></label>
       <input type="text" id="in-url" placeholder="https://openrouter.ai/api/v1/chat/completions" autocomplete="off" spellcheck="false">
       <label for="in-key">API key <span class="hint">checked locally, sent only to your own provider if you run the live test</span></label>
