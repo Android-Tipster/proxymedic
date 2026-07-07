@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProxyMedic — find out exactly why your Janitor AI proxy isn't working</title>
+<meta name="description" content="Free proxy checker for Janitor AI and other roleplay sites. Paste your proxy URL, API key and model name; get told exactly what's wrong and how to fix it. 100% in your browser, your key never leaves it.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%A9%BA%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #0d0b14;
+  --bg2: #151221;
+  --card: #1c1830;
+  --card2: #241e3e;
+  --text: #e9e5f7;
+  --muted: #9b93b8;
+  --accent: #a78bfa;
+  --accent2: #f0abfc;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --info: #60a5fa;
+  --radius: 14px;
+  --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: radial-gradient(1200px 600px at 70% -10%, #2a1f4d 0%, var(--bg) 55%);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
+header { text-align: center; padding: 28px 0 8px; }
+.logo { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
+.logo .pm-cross { color: var(--accent2); }
+.tagline { color: var(--muted); margin-top: 6px; font-size: 1.02rem; }
+.privacy-pill {
+  display: inline-block; margin-top: 12px; padding: 6px 14px; border-radius: 999px;
+  background: rgba(52, 211, 153, 0.12); color: var(--ok); font-size: 0.82rem; font-weight: 600;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+.tabs { display: flex; gap: 8px; margin: 22px 0 14px; }
+.tab {
+  flex: 1; padding: 11px 8px; text-align: center; border-radius: var(--radius);
+  background: var(--bg2); color: var(--muted); font-weight: 600; font-size: 0.95rem;
+  border: 1px solid #2c2547; cursor: pointer; user-select: none;
+}
+.tab.active { background: var(--card2); color: var(--text); border-color: var(--accent); }
+.panel { display: none; }
+.panel.active { display: block; }
+.card {
+  background: var(--card); border: 1px solid #2c2547; border-radius: var(--radius);
+  padding: 18px 16px; margin-bottom: 14px;
+}
+label { display: block; font-weight: 600; font-size: 0.9rem; margin: 14px 0 5px; }
+label:first-child { margin-top: 0; }
+label .hint { color: var(--muted); font-weight: 400; font-size: 0.82rem; }
+input[type="text"], input[type="password"], textarea {
+  width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #3a3160;
+  background: var(--bg2); color: var(--text); font-family: var(--mono); font-size: 0.9rem;
+}
+input:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+textarea { min-height: 110px; resize: vertical; font-size: 0.85rem; }
+.btn {
+  display: block; width: 100%; padding: 14px; margin-top: 16px; border: none;
+  border-radius: var(--radius); font-size: 1.05rem; font-weight: 700; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); color: #17102b;
+}
+.btn:active { transform: translateY(1px); }
+.btn.secondary { background: var(--card2); color: var(--text); border: 1px solid var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: wait; }
+.verdict { border-radius: var(--radius); padding: 14px 16px; margin: 18px 0 12px; font-weight: 700; font-size: 1.05rem; }
+.verdict.broken { background: rgba(248,113,113,0.13); border: 1px solid var(--bad); color: var(--bad); }
+.verdict.shaky { background: rgba(251,191,36,0.11); border: 1px solid var(--warn); color: var(--warn); }
+.verdict.healthy { background: rgba(52,211,153,0.11); border: 1px solid var(--ok); color: var(--ok); }
+.finding { border-left: 4px solid var(--muted); background: var(--bg2); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.finding.blocker { border-left-color: var(--bad); }
+.finding.warning { border-left-color: var(--warn); }
+.finding.info { border-left-color: var(--info); }
+.finding.ok { border-left-color: var(--ok); }
+.finding .f-title { font-weight: 700; font-size: 0.96rem; display: flex; align-items: baseline; gap: 8px; }
+.sev { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+.sev.blocker { background: rgba(248,113,113,0.18); color: var(--bad); }
+.sev.warning { background: rgba(251,191,36,0.16); color: var(--warn); }
+.sev.info { background: rgba(96,165,250,0.16); color: var(--info); }
+.sev.ok { background: rgba(52,211,153,0.15); color: var(--ok); }
+.finding .f-detail { color: var(--muted); font-size: 0.88rem; margin-top: 5px; overflow-wrap: anywhere; }
+.finding .f-fix { margin-top: 7px; font-size: 0.88rem; background: rgba(167,139,250,0.09); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+.finding .f-fix strong { color: var(--accent); }
+.corrected { background: linear-gradient(160deg, #221a44 0%, var(--card) 100%); border: 1px solid var(--accent); }
+.corrected h3 { font-size: 1.02rem; margin-bottom: 4px; }
+.corrected .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 12px; }
+.copyrow { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.copyrow .k { flex-shrink: 0; width: 86px; color: var(--muted); font-size: 0.8rem; font-weight: 700; }
+.copyrow .v {
+  flex: 1; font-family: var(--mono); font-size: 0.82rem; background: var(--bg2);
+  border-radius: 8px; padding: 8px 10px; overflow-x: auto; white-space: nowrap; scrollbar-width: none;
+}
+.copyrow button {
+  flex-shrink: 0; border: 1px solid var(--accent); background: transparent; color: var(--accent);
+  border-radius: 8px; padding: 7px 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+}
+.copyrow button.copied { background: var(--ok); border-color: var(--ok); color: #06281c; }
+.live-note { color: var(--muted); font-size: 0.82rem; margin-top: 8px; text-align: center; }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.share-btn { margin-top: 4px; }
+section.explain { margin-top: 34px; }
+section.explain h2 { font-size: 1.15rem; margin: 22px 0 8px; }
+section.explain p, section.explain li { color: var(--muted); font-size: 0.92rem; }
+section.explain ul { padding-left: 20px; margin-top: 6px; }
+section.explain strong { color: var(--text); }
+.promo {
+  margin-top: 34px; background: linear-gradient(160deg, #2a1640 0%, var(--card) 100%);
+  border: 1px solid #6d28d9; border-radius: var(--radius); padding: 18px 16px;
+}
+.promo h3 { font-size: 1rem; margin-bottom: 6px; }
+.promo p { color: var(--muted); font-size: 0.88rem; }
+.promo a { display: inline-block; margin-top: 10px; color: var(--accent2); font-weight: 700; text-decoration: none; }
+footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 0.82rem; }
+footer a { color: var(--accent); text-decoration: none; }
+@media (min-width: 560px) {
+  .logo { font-size: 2.4rem; }
+  .copyrow .k { width: 110px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">Proxy<span class="pm-cross">Medic</span></div>
+    <div class="tagline">Find out exactly why your Janitor AI proxy isn't working — in 10 seconds.</div>
+    <div class="privacy-pill">🔒 Runs 100% in your browser. Your API key never leaves it.</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="panel-diagnose">Diagnose my setup</div>
+    <div class="tab" data-panel="panel-error">Decode an error</div>
+  </div>
+
+  <div class="panel active" id="panel-diagnose">
+    <div class="card">
+      <label for="in-url">Proxy URL <span class="hint">— what you put in Janitor's "Proxy URL" field</span></label>
+      <input type="text" id="in-url" placeholder="https://openrouter.ai/api/v1/chat/completions" autocomplete="off" spellcheck="false">
+      <label for="in-key">API key <span class="hint">— checked locally, sent only to your own provider if you run the live test</span></label>
+      <input type="password" id="in-key" placeholder="sk-or-v1-…  /  sk-…  /  AIza…" autocomplete="off">
+      <label for="in-model">Model name <span class="hint">— exactly as typed in Janitor's "Model" field</span></label>
+      <input type="text" id="in-model" placeholder="deepseek/deepseek-v3.2" autocomplete="off" spellcheck="false">
+      <button class="btn" id="btn-diagnose">Diagnose</button>
+      <div class="live-note">Step 1 checks everything instantly without any network call.</div>
+    </div>
+    <div id="results"></div>
+    <div id="corrected"></div>
+    <button class="btn secondary" id="btn-livetest" style="display:none">Run live test (talks to your provider, costs at most 1 token)</button>
+    <button class="btn secondary share-btn" id="btn-share" style="display:none">Copy diagnosis for a help thread (key redacted)</button>
+  </div>
+
+  <div class="panel" id="panel-error">
+    <div class="card">
+      <label for="in-error">Paste the error you got <span class="hint">— from Janitor, or the provider's response</span></label>
+      <textarea id="in-error" placeholder='e.g. "A network error occurred, you may be rate limited or having connection issues" or {"error":{"message":"Insufficient Balance"}}'></textarea>
+      <button class="btn" id="btn-decode">Decode it</button>
+    </div>
+    <div id="err-results"></div>
+  </div>
+
+  <section class="explain">
+    <h2>Why do I keep getting "a network error occurred"?</h2>
+    <p>Janitor AI shows the same generic message for almost every proxy failure. Underneath, the cause is nearly always one of these:</p>
+    <ul>
+      <li><strong>Mismatched pieces</strong> — an API key from one provider with a URL from another (the #1 cause). A DeepSeek key cannot talk to openrouter.ai and vice versa.</li>
+      <li><strong>Wrong URL shape</strong> — the field needs the <em>full</em> endpoint ending in <span style="font-family:var(--mono)">/chat/completions</span>, not the base address, and it must be https.</li>
+      <li><strong>Stale model names</strong> — tutorials age fast. DeepSeek's "deepseek-chat" and "deepseek-reasoner" stop working on <strong>July 24, 2026</strong>; OpenRouter needs <span style="font-family:var(--mono)">vendor/model</span> format.</li>
+      <li><strong>Money, not settings</strong> — DeepSeek has no free tier (402 Insufficient Balance on fresh accounts), OpenRouter caps free models at 50 requests/day, Gemini's free quota resets daily.</li>
+      <li><strong>Hidden characters</strong> — mobile copy-paste loves to add spaces and invisible characters that make an otherwise perfect key fail.</li>
+    </ul>
+    <h2>Is it safe to paste my API key here?</h2>
+    <p>Yes. ProxyMedic is a static page with no server and no analytics. The static checks run entirely on your device. If you choose to run the live test, your browser talks <em>directly</em> to your own provider (the same thing Janitor does when you chat) — the key is never stored, logged, or sent anywhere else. The page is <a href="https://github.com/Android-Tipster/proxymedic" style="color:var(--accent)">open source</a>, so you can verify that.</p>
+    <h2>Which providers does it know?</h2>
+    <p>OpenRouter, DeepSeek, Google Gemini, Chutes, Groq, Mistral, OpenAI and Anthropic are recognised with full checks (key format, exact endpoint, live model list). Community reverse proxies are supported through the live test.</p>
+  </section>
+
+  <div class="promo">
+    <h3>While you're fixing your setup…</h3>
+    <p>Proxies break, models get retired, platforms change. If you have a companion or OC you'd hate to lose, keep their personality, memories and voice in a file <em>you</em> own — exportable to any platform (Character Card V2, Janitor, C.AI, system prompt).</p>
+    <a href="https://android-tipster.github.io/soulprint/" target="_blank" rel="noopener">Back up your companion with Soulprint →</a>
+  </div>
+
+  <footer>
+    <p>ProxyMedic is free and open source. <a href="https://github.com/Android-Tipster/proxymedic">GitHub</a> · Not affiliated with Janitor AI or any provider.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+var PM = {};
+if (typeof window !== "undefined") window.PM = PM;
+
+PM.providers = (function () {
+
+// ProxyMedic provider registry.
+// Facts verified live 2026-07-07: CORS preflights pass for every provider below
+// from a github.io origin; error JSON shapes captured with invalid keys;
+// DeepSeek legacy model deprecation date from api-docs.deepseek.com.
+
+const DEEPSEEK_LEGACY_CUTOFF_UTC = Date.UTC(2026, 6, 24, 15, 59, 0); // 2026-07-24 15:59 UTC
+
+const PROVIDERS = {
+  openrouter: {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    hosts: ['openrouter.ai'],
+    chatUrl: 'https://openrouter.ai/api/v1/chat/completions',
+    modelsUrl: 'https://openrouter.ai/api/v1/models',
+    modelsPublic: true,
+    keyInfoUrl: 'https://openrouter.ai/api/v1/key',
+    keyPatterns: [/^sk-or-v1-[0-9a-f]{16,}$/i, /^sk-or-[A-Za-z0-9-]{16,}$/],
+    keyHint: 'sk-or-v1-…',
+    keysPage: 'https://openrouter.ai/keys',
+    creditsPage: 'https://openrouter.ai/credits',
+    modelFormat: 'vendor/model',
+    modelNeedsSlash: true,
+    corsOk: true,
+    // static snapshot from the live /models endpoint, 2026-07-07 (fallback when offline)
+    modelSnapshot: [
+      'deepseek/deepseek-v4-pro', 'deepseek/deepseek-v4-flash', 'deepseek/deepseek-v3.2',
+      'google/gemini-3.5-flash', 'google/gemini-3.1-flash-lite', 'google/gemini-3.1-pro-preview',
+      'anthropic/claude-sonnet-5', 'anthropic/claude-opus-4.8', 'anthropic/claude-opus-4.7',
+      'x-ai/grok-4.3', 'x-ai/grok-4.20', 'moonshotai/kimi-k2.6', 'moonshotai/kimi-k2.5',
+      'mistralai/mistral-large-2512', 'mistralai/mistral-medium-3-5', 'mistralai/mistral-small-2603',
+      'qwen/qwen3.6-plus', 'qwen/qwen3.5-plus-02-15',
+      'meta-llama/llama-3.3-70b-instruct:free', 'meta-llama/llama-3.2-3b-instruct:free',
+      'nousresearch/hermes-3-llama-3.1-405b:free', 'qwen/qwen3-coder:free',
+      'openai/gpt-oss-120b:free', 'openai/gpt-oss-20b:free',
+      'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
+      'google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free'
+    ],
+    notes: 'Free-tier accounts (under $10 ever purchased) are capped at 50 requests/day on :free models; accounts that have bought $10+ credits get 1000/day.'
+  },
+  deepseek: {
+    id: 'deepseek',
+    name: 'DeepSeek (official API)',
+    hosts: ['api.deepseek.com'],
+    chatUrl: 'https://api.deepseek.com/v1/chat/completions',
+    altPaths: ['/chat/completions'],
+    modelsUrl: 'https://api.deepseek.com/models',
+    modelsPublic: false,
+    keyPatterns: [/^sk-[0-9a-f]{32}$/],
+    keyHint: 'sk- followed by 32 characters',
+    keysPage: 'https://platform.deepseek.com/api_keys',
+    creditsPage: 'https://platform.deepseek.com/top_up',
+    modelFormat: 'plain',
+    modelNeedsSlash: false,
+    corsOk: true,
+    modelSnapshot: ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-chat', 'deepseek-reasoner'],
+    legacyModels: {
+      'deepseek-chat': 'deepseek-v4-flash',
+      'deepseek-reasoner': 'deepseek-v4-pro'
+    },
+    notes: 'DeepSeek has no free tier: a fresh account with no top-up returns 402 Insufficient Balance.'
+  },
+  google: {
+    id: 'google',
+    name: 'Google Gemini',
+    hosts: ['generativelanguage.googleapis.com'],
+    chatUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    modelsUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/models',
+    modelsPublic: false,
+    keyPatterns: [/^AIza[0-9A-Za-z_-]{30,}$/],
+    keyHint: 'AIza…',
+    keysPage: 'https://aistudio.google.com/apikey',
+    creditsPage: 'https://aistudio.google.com/apikey',
+    modelFormat: 'plain',
+    modelNeedsSlash: false,
+    corsOk: true,
+    modelSnapshot: ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3-pro'],
+    notes: 'Gemini has a real free tier with daily quotas; 429 RESOURCE_EXHAUSTED means the daily free quota ran out, not a broken setup.'
+  },
+  chutes: {
+    id: 'chutes',
+    name: 'Chutes',
+    hosts: ['llm.chutes.ai', 'chutes.ai'],
+    chatUrl: 'https://llm.chutes.ai/v1/chat/completions',
+    modelsUrl: 'https://llm.chutes.ai/v1/models',
+    modelsPublic: true,
+    keyPatterns: [/^cpk_[A-Za-z0-9._-]{16,}$/],
+    keyHint: 'cpk_…',
+    keysPage: 'https://chutes.ai/app/api',
+    creditsPage: 'https://chutes.ai/app/account',
+    modelFormat: 'vendor/model',
+    modelNeedsSlash: true,
+    corsOk: true,
+    modelSnapshot: ['deepseek-ai/DeepSeek-V3.2', 'deepseek-ai/DeepSeek-R1'],
+    notes: 'Chutes ended its unlimited free tier in 2025; most models now need a small paid balance or a subscription plan.'
+  },
+  groq: {
+    id: 'groq',
+    name: 'Groq',
+    hosts: ['api.groq.com'],
+    chatUrl: 'https://api.groq.com/openai/v1/chat/completions',
+    modelsUrl: 'https://api.groq.com/openai/v1/models',
+    modelsPublic: false,
+    keyPatterns: [/^gsk_[A-Za-z0-9]{20,}$/],
+    keyHint: 'gsk_…',
+    keysPage: 'https://console.groq.com/keys',
+    creditsPage: 'https://console.groq.com/settings/billing',
+    modelFormat: 'plain-or-vendor',
+    modelNeedsSlash: false,
+    corsOk: true,
+    modelSnapshot: ['llama-3.3-70b-versatile', 'meta-llama/llama-4-scout-17b-16e-instruct'],
+    notes: ''
+  },
+  mistral: {
+    id: 'mistral',
+    name: 'Mistral',
+    hosts: ['api.mistral.ai'],
+    chatUrl: 'https://api.mistral.ai/v1/chat/completions',
+    modelsUrl: 'https://api.mistral.ai/v1/models',
+    modelsPublic: false,
+    keyPatterns: [],
+    keyHint: '32-character key with no prefix',
+    keysPage: 'https://console.mistral.ai/api-keys',
+    creditsPage: 'https://console.mistral.ai/billing',
+    modelFormat: 'plain',
+    modelNeedsSlash: false,
+    corsOk: true,
+    modelSnapshot: ['mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest', 'open-mistral-nemo'],
+    notes: ''
+  },
+  openai: {
+    id: 'openai',
+    name: 'OpenAI',
+    hosts: ['api.openai.com'],
+    chatUrl: 'https://api.openai.com/v1/chat/completions',
+    modelsUrl: 'https://api.openai.com/v1/models',
+    modelsPublic: false,
+    keyPatterns: [/^sk-proj-[A-Za-z0-9_-]{20,}$/, /^sk-[A-Za-z0-9_-]{40,}$/],
+    keyHint: 'sk-proj-… or sk-…',
+    keysPage: 'https://platform.openai.com/api-keys',
+    creditsPage: 'https://platform.openai.com/settings/organization/billing',
+    modelFormat: 'plain',
+    modelNeedsSlash: false,
+    corsOk: true,
+    modelSnapshot: ['gpt-5.2', 'gpt-5-mini', 'gpt-4.1', 'gpt-4o'],
+    notes: ''
+  },
+  anthropic: {
+    id: 'anthropic',
+    name: 'Anthropic',
+    hosts: ['api.anthropic.com'],
+    chatUrl: 'https://api.anthropic.com/v1/messages',
+    modelsUrl: 'https://api.anthropic.com/v1/models',
+    modelsPublic: false,
+    keyPatterns: [/^sk-ant-[A-Za-z0-9_-]{20,}$/],
+    keyHint: 'sk-ant-…',
+    keysPage: 'https://console.anthropic.com/settings/keys',
+    creditsPage: 'https://console.anthropic.com/settings/billing',
+    modelFormat: 'plain',
+    modelNeedsSlash: false,
+    corsOk: true,
+    notCompletionsShaped: true,
+    modelSnapshot: ['claude-sonnet-5', 'claude-opus-4-8', 'claude-haiku-4-5'],
+    notes: 'The Anthropic API is not OpenAI-compatible. Janitor AI\'s proxy field expects an OpenAI-style /chat/completions endpoint, so a direct Anthropic key only works through a translating proxy such as OpenRouter.'
+  }
+};
+
+// Hosts that are almost always someone's reverse proxy rather than a first-party API.
+const REVERSE_PROXY_HINTS = [
+  '.hf.space', '.workers.dev', '.onrender.com', '.up.railway.app', '.fly.dev',
+  '.vercel.app', '.netlify.app', '.ngrok', '.loca.lt', '.serveo.net'
+];
+
+// Sites people paste by mistake because they are the *website*, not the API.
+const WEBSITE_NOT_API = {
+  'janitorai.com': 'That is Janitor AI itself, not a proxy. The Proxy URL field needs the address of an AI provider\'s API (for example OpenRouter or DeepSeek).',
+  'www.janitorai.com': 'That is Janitor AI itself, not a proxy. The Proxy URL field needs the address of an AI provider\'s API (for example OpenRouter or DeepSeek).',
+  'chat.deepseek.com': 'That is the DeepSeek chat website. The API lives at https://api.deepseek.com/v1/chat/completions and needs an API key from platform.deepseek.com.',
+  'www.deepseek.com': 'That is the DeepSeek marketing site. The API lives at https://api.deepseek.com/v1/chat/completions.',
+  'platform.deepseek.com': 'That is the DeepSeek dashboard where you create keys. The API itself lives at https://api.deepseek.com/v1/chat/completions.',
+  'chat.openai.com': 'That is the ChatGPT website. The API lives at https://api.openai.com/v1/chat/completions.',
+  'chatgpt.com': 'That is the ChatGPT website. The API lives at https://api.openai.com/v1/chat/completions.',
+  'gemini.google.com': 'That is the Gemini chat website. The API endpoint is https://generativelanguage.googleapis.com/v1beta/openai/chat/completions.',
+  'aistudio.google.com': 'That is Google AI Studio where you create keys. The API endpoint is https://generativelanguage.googleapis.com/v1beta/openai/chat/completions.',
+  'claude.ai': 'That is the Claude website. Anthropic\'s API is not OpenAI-compatible; to use Claude models on Janitor, go through OpenRouter instead.'
+};
+
+function providerByHost(host) {
+  if (!host) return null;
+  const h = host.toLowerCase();
+  for (const p of Object.values(PROVIDERS)) {
+    if (p.hosts.some(x => h === x || h.endsWith('.' + x))) return p;
+  }
+  return null;
+}
+
+return { providerByHost, DEEPSEEK_LEGACY_CUTOFF_UTC, PROVIDERS, REVERSE_PROXY_HINTS, WEBSITE_NOT_API };
+})();
+
+PM.fingerprint = (function () {
+const { PROVIDERS, REVERSE_PROXY_HINTS, WEBSITE_NOT_API, providerByHost } = PM.providers;
+// Key + URL fingerprinting and provider mismatch detection.
+
+const INVISIBLES = /[​-‍﻿ ⁠]/g;
+
+function cleanInput(raw) {
+  if (raw == null) return { value: '', hadWhitespace: false, hadInvisible: false };
+  const str = String(raw);
+  const hadInvisible = INVISIBLES.test(str);
+  INVISIBLES.lastIndex = 0;
+  const stripped = str.replace(INVISIBLES, '');
+  const trimmed = stripped.trim();
+  return { value: trimmed, hadWhitespace: stripped !== trimmed, hadInvisible };
+}
+
+// Identify the provider a key belongs to. Returns {provider, confidence, cleaned, notes[]}
+function fingerprintKey(rawKey) {
+  const { value: key0, hadWhitespace, hadInvisible } = cleanInput(rawKey);
+  const notes = [];
+  let key = key0;
+  if (hadWhitespace) notes.push('whitespace');
+  if (hadInvisible) notes.push('invisible-chars');
+  if (/^bearer\s+/i.test(key)) {
+    key = key.replace(/^bearer\s+/i, '');
+    notes.push('bearer-prefix');
+  }
+  if (/\s/.test(key)) notes.push('inner-whitespace');
+  const compact = key.replace(/\s+/g, '');
+
+  if (!compact) return { provider: null, confidence: 0, cleaned: '', notes };
+
+  const ordered = [
+    ['openrouter', 3], ['anthropic', 3], ['google', 3], ['groq', 3], ['chutes', 3],
+    ['deepseek', 2], ['openai', 2]
+  ];
+  for (const [id, conf] of ordered) {
+    const p = PROVIDERS[id];
+    if (p.keyPatterns.some(rx => rx.test(compact))) {
+      return { provider: p, confidence: conf, cleaned: compact, notes };
+    }
+  }
+  // Weak signals
+  if (/^sk-or/i.test(compact)) return { provider: PROVIDERS.openrouter, confidence: 2, cleaned: compact, notes };
+  if (/^sk-ant/i.test(compact)) return { provider: PROVIDERS.anthropic, confidence: 2, cleaned: compact, notes };
+  if (/^AIza/.test(compact)) return { provider: PROVIDERS.google, confidence: 2, cleaned: compact, notes };
+  if (/^gsk_/.test(compact)) return { provider: PROVIDERS.groq, confidence: 2, cleaned: compact, notes };
+  if (/^cpk_/.test(compact)) return { provider: PROVIDERS.chutes, confidence: 2, cleaned: compact, notes };
+  if (/^sk-/.test(compact)) {
+    // Could be OpenAI or DeepSeek. DeepSeek is exactly sk- + 32 hex; anything longer is OpenAI-ish.
+    const body = compact.slice(3);
+    if (/^[0-9a-f]+$/.test(body) && body.length <= 36) {
+      return { provider: PROVIDERS.deepseek, confidence: 1, cleaned: compact, notes };
+    }
+    return { provider: PROVIDERS.openai, confidence: 1, cleaned: compact, notes };
+  }
+  if (/^[A-Za-z0-9]{28,40}$/.test(compact)) {
+    return { provider: PROVIDERS.mistral, confidence: 1, cleaned: compact, notes };
+  }
+  return { provider: null, confidence: 0, cleaned: compact, notes };
+}
+
+// Identify what a URL points at. Returns {provider, kind, host, cleaned, website, reverseProxy}
+function fingerprintUrl(rawUrl) {
+  const { value: cleanedRaw, hadWhitespace, hadInvisible } = cleanInput(rawUrl);
+  const notes = [];
+  if (hadWhitespace) notes.push('whitespace');
+  if (hadInvisible) notes.push('invisible-chars');
+  let candidate = cleanedRaw;
+  if (candidate && !/^[a-z]+:\/\//i.test(candidate)) candidate = 'https://' + candidate;
+  let parsed = null;
+  try { parsed = new URL(candidate); } catch { /* unparseable */ }
+  if (!parsed) return { provider: null, kind: 'invalid', host: null, cleaned: cleanedRaw, notes };
+
+  const host = parsed.hostname.toLowerCase();
+  const website = WEBSITE_NOT_API[host] || null;
+  if (website) return { provider: null, kind: 'website', host, cleaned: cleanedRaw, websiteMessage: website, notes };
+
+  const provider = providerByHost(host);
+  if (provider) return { provider, kind: 'provider', host, cleaned: cleanedRaw, parsed, notes };
+
+  const reverseProxy = REVERSE_PROXY_HINTS.some(h => host.includes(h.replace(/^\./, '')) || host.endsWith(h));
+  return { provider: null, kind: reverseProxy ? 'reverse-proxy' : 'unknown', host, cleaned: cleanedRaw, parsed, notes };
+}
+
+// The headline check: does the key belong to the API the URL points at?
+function detectMismatch(keyFp, urlFp) {
+  if (!keyFp.provider || !urlFp.provider) return null;
+  if (keyFp.provider.id === urlFp.provider.id) return null;
+  return {
+    keyProvider: keyFp.provider,
+    urlProvider: urlFp.provider,
+    confidence: Math.min(keyFp.confidence, 3)
+  };
+}
+
+return { cleanInput, fingerprintKey, fingerprintUrl, detectMismatch };
+})();
+
+PM.urlcheck = (function () {
+const { fingerprintUrl } = PM.fingerprint;
+// URL shape validation and repair for Janitor AI's Proxy URL field.
+// Janitor's own help docs require the FULL endpoint ending in /chat/completions.
+
+// Analyse a proxy URL. Returns { findings: [], corrected: string|null, urlFp }
+function checkUrl(rawUrl) {
+  const findings = [];
+  const urlFp = fingerprintUrl(rawUrl);
+  const raw = urlFp.cleaned;
+
+  if (!raw) {
+    findings.push({
+      severity: 'blocker', code: 'url-empty', title: 'No proxy URL',
+      detail: 'The Proxy URL field is empty.',
+      fix: 'Paste your provider\'s full chat completions URL, for example https://openrouter.ai/api/v1/chat/completions.'
+    });
+    return { findings, corrected: null, urlFp };
+  }
+
+  if (urlFp.notes.includes('whitespace') || urlFp.notes.includes('invisible-chars')) {
+    findings.push({
+      severity: 'warning', code: 'url-hidden-chars', title: 'Hidden characters in the URL',
+      detail: 'The URL had leading/trailing spaces or invisible characters (a common mobile copy-paste bug). They were removed for this diagnosis, but Janitor will use them exactly as pasted.',
+      fix: 'Delete the URL in Janitor and re-paste it with no spaces before or after.'
+    });
+  }
+
+  if (urlFp.kind === 'invalid') {
+    findings.push({
+      severity: 'blocker', code: 'url-invalid', title: 'Not a valid URL',
+      detail: `"${raw}" cannot be parsed as a web address.`,
+      fix: 'Copy the endpoint URL again from your provider\'s docs. It should start with https:// and end with /chat/completions.'
+    });
+    return { findings, corrected: null, urlFp };
+  }
+
+  if (urlFp.kind === 'website') {
+    findings.push({
+      severity: 'blocker', code: 'url-website', title: 'That URL is a website, not an API',
+      detail: urlFp.websiteMessage,
+      fix: 'Replace the Proxy URL with the API endpoint. See the corrected config below if a provider was detected from your key.'
+    });
+    return { findings, corrected: null, urlFp };
+  }
+
+  const parsed = urlFp.parsed;
+  let corrected = null;
+
+  if (parsed.protocol === 'http:') {
+    findings.push({
+      severity: 'blocker', code: 'url-http', title: 'URL uses http:// instead of https://',
+      detail: 'Janitor AI runs on https, so browsers block plain-http proxy calls as mixed content.',
+      fix: 'Change http:// to https:// in the Proxy URL.'
+    });
+  }
+
+  if (urlFp.kind === 'provider') {
+    const p = urlFp.provider;
+    const want = new URL(p.chatUrl);
+    const gotPath = parsed.pathname.replace(/\/+$/, '');
+    const wantPath = want.pathname;
+
+    const altOk = (p.altPaths || []).includes(gotPath);
+    if (gotPath === wantPath || altOk) {
+      findings.push({
+        severity: 'ok', code: 'url-ok', title: `URL is the correct ${p.name} endpoint`,
+        detail: p.chatUrl, fix: null
+      });
+      corrected = p.chatUrl;
+    } else {
+      corrected = p.chatUrl;
+      const gotLower = gotPath.toLowerCase();
+      if (gotPath === '' || gotPath === '/v1' || gotPath === '/api/v1' || gotPath === '/api' || gotPath === '/openai/v1' || gotPath === '/v1beta/openai') {
+        findings.push({
+          severity: 'blocker', code: 'url-base-only', title: 'URL is missing the /chat/completions ending',
+          detail: `You pasted the base URL (${raw}). Janitor AI needs the full endpoint.`,
+          fix: `Use ${p.chatUrl}`
+        });
+      } else if (gotLower.endsWith('/chat/completion')) {
+        findings.push({
+          severity: 'blocker', code: 'url-typo-completion', title: 'Typo: "completion" should be "completions"',
+          detail: `The path ends in /chat/completion (singular). The endpoint is plural.`,
+          fix: `Use ${p.chatUrl}`
+        });
+      } else if (gotLower.endsWith('/chat/completions') ) {
+        findings.push({
+          severity: 'blocker', code: 'url-wrong-path', title: `Right ending, wrong path for ${p.name}`,
+          detail: `${p.name}'s endpoint is ${want.pathname}, but your URL has ${gotPath}.`,
+          fix: `Use ${p.chatUrl}`
+        });
+      } else if (gotLower.includes('/models')) {
+        findings.push({
+          severity: 'blocker', code: 'url-models-endpoint', title: 'That is the model-list endpoint, not the chat endpoint',
+          detail: 'The /models URL only lists models. Chat requests go to /chat/completions.',
+          fix: `Use ${p.chatUrl}`
+        });
+      } else {
+        findings.push({
+          severity: 'blocker', code: 'url-unrecognised-path', title: `Unrecognised path on ${p.name}`,
+          detail: `${p.name} was detected from the domain, but the path ${gotPath || '/'} is not its chat endpoint.`,
+          fix: `Use ${p.chatUrl}`
+        });
+      }
+    }
+    if (p.notCompletionsShaped) {
+      findings.push({
+        severity: 'blocker', code: 'url-not-openai-compatible', title: `${p.name} is not OpenAI-compatible`,
+        detail: p.notes,
+        fix: 'Create a free OpenRouter account, add your key there, and use https://openrouter.ai/api/v1/chat/completions with an OpenRouter key instead.'
+      });
+      corrected = null;
+    }
+  } else if (urlFp.kind === 'reverse-proxy') {
+    const endsRight = /\/chat\/completions\/?$/i.test(parsed.pathname);
+    findings.push({
+      severity: endsRight ? 'info' : 'warning',
+      code: 'url-reverse-proxy',
+      title: 'This looks like a community reverse proxy',
+      detail: `${urlFp.host} is not a first-party AI provider. ProxyMedic can still live-test it, but model names, keys and uptime depend entirely on whoever runs the proxy.` + (endsRight ? '' : ' Its path also does not end in /chat/completions, which most OpenAI-compatible proxies require.'),
+      fix: endsRight ? null : 'If the proxy owner gave you a base URL, try adding /v1/chat/completions to the end.'
+    });
+    corrected = urlFp.cleaned;
+  } else {
+    const endsRight = /\/chat\/completions\/?$/i.test(parsed.pathname);
+    findings.push({
+      severity: endsRight ? 'info' : 'warning',
+      code: 'url-unknown-host',
+      title: 'Unknown API host',
+      detail: `${urlFp.host} is not one of the providers ProxyMedic knows. That is fine if it is a smaller or self-hosted service.` + (endsRight ? '' : ' Note the path does not end in /chat/completions, which Janitor normally requires.'),
+      fix: endsRight ? null : 'Check the provider\'s docs for the full "chat completions" endpoint URL.'
+    });
+    corrected = urlFp.cleaned;
+  }
+
+  return { findings, corrected, urlFp };
+}
+
+return { checkUrl };
+})();
+
+PM.modelcheck = (function () {
+const { PROVIDERS, DEEPSEEK_LEGACY_CUTOFF_UTC } = PM.providers;
+const { cleanInput } = PM.fingerprint;
+// Model-name validation: format rules per provider, legacy warnings, fuzzy "did you mean".
+
+
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function closestModel(model, catalog, maxResults = 3) {
+  const q = model.toLowerCase();
+  const scored = catalog.map(id => {
+    const idL = id.toLowerCase();
+    let score;
+    if (idL === q) score = 0;
+    else if (idL.includes(q) || q.includes(idL.split('/').pop())) score = 1;
+    else score = 2 + levenshtein(q, idL) / Math.max(q.length, idL.length);
+    return { id, score };
+  }).sort((x, y) => x.score - y.score);
+  return scored.slice(0, maxResults).filter(s => s.score < 2.6).map(s => s.id);
+}
+
+// provider may be null (unknown host). liveCatalog: string[] fetched at runtime, optional.
+// now: ms epoch for testability.
+function checkModel(rawModel, provider, liveCatalog = null, now = Date.now()) {
+  const findings = [];
+  const { value: model, hadWhitespace, hadInvisible } = cleanInput(rawModel);
+
+  if (!model) {
+    findings.push({
+      severity: 'blocker', code: 'model-empty', title: 'No model name',
+      detail: 'The Model field is empty. Janitor sends this string to the provider, and providers reject requests with no model.',
+      fix: provider ? `For ${provider.name}, a safe starting choice is ${provider.modelSnapshot[0]}.` : 'Check your provider\'s docs for the exact model ID.'
+    });
+    return { findings, corrected: null };
+  }
+  if (hadWhitespace || hadInvisible) {
+    findings.push({
+      severity: 'warning', code: 'model-hidden-chars', title: 'Hidden characters in the model name',
+      detail: 'The model name had extra spaces or invisible characters. Providers match model names exactly, so "deepseek-chat " with a trailing space fails.',
+      fix: 'Re-type the model name in Janitor with no spaces around it.'
+    });
+  }
+
+  let corrected = model;
+
+  if (!provider) {
+    findings.push({
+      severity: 'info', code: 'model-unverifiable', title: 'Model name cannot be verified',
+      detail: 'The proxy host is not a known provider, so ProxyMedic cannot check whether this model name exists there. The live test will reveal it.',
+      fix: null
+    });
+    return { findings, corrected };
+  }
+
+  const catalog = (liveCatalog && liveCatalog.length) ? liveCatalog : (provider.modelSnapshot || []);
+  const catalogIsLive = !!(liveCatalog && liveCatalog.length);
+
+  // Format rules
+  const hasSlash = model.includes('/');
+  if (provider.modelNeedsSlash && !hasSlash) {
+    const suggestions = closestModel(model, catalog);
+    findings.push({
+      severity: 'blocker', code: 'model-needs-vendor-prefix', title: `${provider.name} model names need a vendor prefix`,
+      detail: `${provider.name} uses "vendor/model" IDs (for example deepseek/deepseek-v3.2). "${model}" has no vendor part, so the provider will answer "model not found".`,
+      fix: suggestions.length ? `Did you mean: ${suggestions.join(', ')}` : `Browse the model list at ${provider.modelsUrl.replace('/api/v1/models', '/models')}`
+    });
+    if (suggestions.length) corrected = suggestions[0];
+  } else if (!provider.modelNeedsSlash && hasSlash && provider.modelFormat === 'plain') {
+    const stripped = model.split('/').pop();
+    const suggestions = closestModel(stripped, catalog);
+    findings.push({
+      severity: 'blocker', code: 'model-vendor-prefix-wrong', title: `${provider.name} does not use vendor/model IDs`,
+      detail: `"${model}" looks like an OpenRouter-style ID. On ${provider.name}'s own API the model name has no vendor prefix.`,
+      fix: suggestions.length ? `Use ${suggestions[0]}` : `Try "${stripped}"`
+    });
+    corrected = suggestions.length ? suggestions[0] : stripped;
+  }
+
+  // DeepSeek legacy names (verified from api-docs.deepseek.com: gone 2026-07-24 15:59 UTC)
+  if (provider.legacyModels && provider.legacyModels[model]) {
+    const replacement = provider.legacyModels[model];
+    const gone = now >= DEEPSEEK_LEGACY_CUTOFF_UTC;
+    const daysLeft = Math.max(0, Math.ceil((DEEPSEEK_LEGACY_CUTOFF_UTC - now) / 86400000));
+    findings.push({
+      severity: gone ? 'blocker' : 'warning',
+      code: gone ? 'model-legacy-dead' : 'model-legacy-dying',
+      title: gone ? `"${model}" was discontinued on July 24, 2026` : `"${model}" stops working on July 24, 2026`,
+      detail: gone
+        ? `DeepSeek retired the legacy name "${model}". Every tutorial written before mid-2026 still uses it, which is why setups that worked for months suddenly broke.`
+        : `DeepSeek is retiring the legacy name "${model}" in ${daysLeft} day${daysLeft === 1 ? '' : 's'} (July 24, 2026 15:59 UTC). Your setup works today but will break that day.`,
+      fix: `Switch the Model field to ${replacement} now.`
+    });
+    corrected = gone ? replacement : corrected;
+  } else if (catalog.length && !catalog.some(id => id.toLowerCase() === model.toLowerCase())) {
+    // Not in catalog
+    const suggestions = closestModel(model, catalog);
+    const already = findings.some(f => f.code === 'model-needs-vendor-prefix' || f.code === 'model-vendor-prefix-wrong');
+    if (!already) {
+      findings.push({
+        severity: catalogIsLive ? 'blocker' : 'warning',
+        code: catalogIsLive ? 'model-not-in-live-list' : 'model-not-in-snapshot',
+        title: catalogIsLive
+          ? `"${model}" is not in ${provider.name}'s live model list`
+          : `"${model}" is not a model name ProxyMedic recognises for ${provider.name}`,
+        detail: catalogIsLive
+          ? `The provider's own /models endpoint was checked a moment ago and does not list this ID.`
+          : `This check used a built-in snapshot, so a very new model might be missing. The live test will settle it.`,
+        fix: suggestions.length ? `Closest matches: ${suggestions.join(', ')}` : 'Check the exact ID on your provider\'s model list.'
+      });
+      if (suggestions.length && catalogIsLive) corrected = suggestions[0];
+    }
+  } else if (catalog.length) {
+    const exact = catalog.find(id => id.toLowerCase() === model.toLowerCase());
+    if (exact && exact !== model) {
+      findings.push({
+        severity: 'warning', code: 'model-case', title: 'Model name capitalisation differs',
+        detail: `The provider lists it as "${exact}" but you wrote "${model}". Some providers match case-sensitively.`,
+        fix: `Use ${exact}`
+      });
+      corrected = exact;
+    } else {
+      findings.push({
+        severity: 'ok', code: 'model-ok', title: `Model name looks right for ${provider.name}`,
+        detail: model, fix: null
+      });
+    }
+  }
+
+  // OpenRouter :free hint
+  if (provider.id === 'openrouter' && model.endsWith(':free')) {
+    findings.push({
+      severity: 'info', code: 'model-free-tier', title: 'Free model daily caps apply',
+      detail: PROVIDERS.openrouter.notes,
+      fix: null
+    });
+  }
+
+  return { findings, corrected };
+}
+
+return { levenshtein, closestModel, checkModel };
+})();
+
+PM.errordecode = (function () {
+
+// Error decoder: turns provider/Janitor error text or an HTTP status + body
+// into a named cause and a concrete fix.
+
+// Each rule: {code, match: RegExp, status?: number[], title, cause, fix, severity}
+// Matching is case-insensitive substring/regex over the raw pasted text or response body.
+const RULES = [
+  {
+    code: 'err-janitor-generic',
+    match: /a network error occurred|network error.*rate limited|check your (proxy|api) settings/i,
+    title: 'Janitor\'s generic "network error"',
+    cause: 'This is Janitor AI\'s catch-all message. It usually means the request never got a usable answer: wrong proxy URL, a key that belongs to a different provider than the URL, a dead reverse proxy, or a blocked/malformed request.',
+    fix: 'Run the full diagnosis above with your URL, key and model. The three-field mismatch (key from one provider, URL from another) is the single most common cause.'
+  },
+  {
+    code: 'err-failed-to-fetch',
+    match: /failed to fetch|networkerror when attempting|load failed|err_canceled|err_connection|cors/i,
+    title: 'The browser could not reach the proxy at all',
+    cause: 'The request died before any AI provider saw it: a typo\'d domain, a dead reverse proxy, an http:// URL on an https page, a VPN/firewall block, or a server that does not allow browser (CORS) access.',
+    fix: 'Check the URL spelling first. If it is a community reverse proxy, it may simply be offline. All major first-party APIs (OpenRouter, DeepSeek, Gemini, Groq, Mistral) allow browser access, so for those this points at the URL or your network.'
+  },
+  {
+    code: 'err-401-openrouter-user',
+    match: /user not found/i, status: [401],
+    title: 'OpenRouter does not recognise this key',
+    cause: 'The key was deleted, was never valid, or was pasted incompletely. OpenRouter answers "User not found." exactly in that case.',
+    fix: 'Open openrouter.ai/keys, create a fresh key, and paste the whole thing (it starts with sk-or-v1-).'
+  },
+  {
+    code: 'err-401-no-auth',
+    match: /no auth credentials|no cookie auth|missing.*authorization|authorization.*missing/i, status: [401],
+    title: 'No API key reached the provider',
+    cause: 'The request arrived with an empty Authorization header. In Janitor this happens when the API key field is empty, or the key was saved into a different configuration than the one selected in the chat.',
+    fix: 'Open the proxy settings, confirm the key is present in THIS configuration, hit Save, then refresh the page (Janitor is known to need a full refresh after proxy changes).'
+  },
+  {
+    code: 'err-401-deepseek-auth',
+    match: /authentication fails/i, status: [401],
+    title: 'DeepSeek rejected the key',
+    cause: 'DeepSeek answers "Authentication Fails, Your api key: ****xxxx is invalid" when the key is wrong, revoked, or truncated.',
+    fix: 'Create a new key at platform.deepseek.com/api_keys and paste it in one piece (sk- followed by 32 characters, no spaces).'
+  },
+  {
+    code: 'err-401-generic',
+    match: /invalid api key|invalid_api_key|incorrect api key|api key not valid|please pass a valid api key|invalid x-api-key|authentication_error/i,
+    title: 'The provider rejected the API key',
+    cause: 'The key is invalid for this provider. Either it was mistyped/truncated, it was revoked, or it belongs to a different provider than the URL you are calling.',
+    fix: 'Compare the key prefix with the URL: sk-or-v1 keys only work on openrouter.ai, AIza keys only on generativelanguage.googleapis.com, sk-(32 chars) DeepSeek keys only on api.deepseek.com. Then re-create the key on the provider\'s dashboard if it still fails.'
+  },
+  {
+    code: 'err-402-deepseek',
+    match: /insufficient balance/i,
+    title: 'Out of credits (DeepSeek)',
+    cause: 'DeepSeek has no free tier. A brand-new account, or one whose top-up ran out, returns 402 Insufficient Balance for every request even though the key is valid.',
+    fix: 'Top up at platform.deepseek.com/top_up (a few dollars lasts a long time at DeepSeek prices), or switch to a free OpenRouter model while you decide.'
+  },
+  {
+    code: 'err-402-openrouter',
+    match: /requires more credits|insufficient credits|can only afford|prompt tokens limit exceeded/i,
+    title: 'Not enough OpenRouter credits',
+    cause: 'The account balance cannot cover this request (long chats make it worse: the whole history is re-sent every message).',
+    fix: 'Add credits at openrouter.ai/credits, pick a cheaper model, or use a :free variant. Reducing context size in Janitor\'s generation settings also lowers cost per message.'
+  },
+  {
+    code: 'err-402-generic',
+    match: /quota.*exceed|exceeded your current quota|billing|payment required/i, status: [402],
+    title: 'Billing / quota problem',
+    cause: 'The key is valid but the account has no usable balance or its quota ran out.',
+    fix: 'Open the provider\'s billing page and check the balance. On pay-as-you-go APIs a $0 balance fails exactly like this.'
+  },
+  {
+    code: 'err-403-region',
+    match: /unsupported_country_region_territory|not available in your (country|region)|user location is not supported/i,
+    title: 'Region block',
+    cause: 'The provider does not serve your country or your VPN exit country.',
+    fix: 'Use OpenRouter (which routes around most regional blocks) or try with the VPN off/on a different region.'
+  },
+  {
+    code: 'err-403-moderation',
+    match: /flagged|moderation|content policy|violat(ed|ing).*policy|prohibited content/i,
+    title: 'Content was refused by the provider\'s filter',
+    cause: 'The provider\'s moderation layer blocked the request. This is about the message content or character card, not your setup.',
+    fix: 'Nothing is broken. Model choice matters here: different providers and models enforce different content rules.'
+  },
+  {
+    code: 'err-404-model',
+    match: /model.*(not exist|not found|does not exist|invalid model|unknown model)|no endpoints found|is not a valid model id/i,
+    title: 'The model name is wrong',
+    cause: 'The provider does not have a model by that exact name. Model IDs change often and tutorials go stale (DeepSeek retired "deepseek-chat"/"deepseek-reasoner" on July 24, 2026; OpenRouter needs vendor/model format).',
+    fix: 'Use the Model check above: it validates your model name against the provider\'s live list and suggests the closest current ID.'
+  },
+  {
+    code: 'err-404-path',
+    match: /404|not found/i, status: [404],
+    title: '404: the URL path is wrong',
+    cause: 'The domain answered but nothing lives at that path. Usually the URL is missing /v1/chat/completions, or has a typo like /chat/completion.',
+    fix: 'Use the full endpoint from your provider\'s docs, e.g. https://openrouter.ai/api/v1/chat/completions.'
+  },
+  {
+    code: 'err-429-free-tier',
+    match: /free-models-per-day|rate limit exceeded.*free|daily.*limit.*free/i,
+    title: 'Daily free-model cap reached (OpenRouter)',
+    cause: 'OpenRouter caps :free models at 50 requests/day (1000/day once you have ever bought $10+ of credits). The cap resets daily.',
+    fix: 'Wait for the reset, buy the one-time $10 credit to 20x the cap, or point the same key at a cheap paid model.'
+  },
+  {
+    code: 'err-429-resource-exhausted',
+    match: /resource_exhausted|resource exhausted/i,
+    title: 'Gemini free-tier quota used up',
+    cause: 'Google\'s free tier has per-minute and per-day request quotas. RESOURCE_EXHAUSTED means one of them ran out; the key itself is fine.',
+    fix: 'Wait a minute (per-minute cap) or until tomorrow (daily cap), switch to a lighter model like gemini-3.1-flash-lite, or enable billing for higher limits.'
+  },
+  {
+    code: 'err-429-generic',
+    match: /rate limit|too many requests|429/i, status: [429],
+    title: 'Rate limited',
+    cause: 'Too many requests in a window, or the provider is throttling free usage. On shared/community proxies this often means the proxy\'s own upstream key is rate limited, not you.',
+    fix: 'Wait 60 seconds and retry once. If it persists on a community proxy, the proxy is saturated: switch to your own key on OpenRouter/DeepSeek/Gemini.'
+  },
+  {
+    code: 'err-503-overloaded',
+    match: /overloaded|service unavailable|502|503|bad gateway|internal server error|500/i, status: [500, 502, 503],
+    title: 'The provider (or proxy) is having problems',
+    cause: 'The server answered with a 5xx error: it is down, overloaded, or the reverse proxy\'s upstream is broken. Nothing on your side causes this.',
+    fix: 'Retry in a few minutes. Check the provider\'s status page. If it is a community reverse proxy, check the thread/Discord where you got it.'
+  },
+  {
+    code: 'err-think-tags',
+    match: /<think>|<\/think>/i,
+    title: 'Not an error: those are reasoning tags',
+    cause: 'You are using a reasoning model (like deepseek-reasoner / R1 variants). The <think>...</think> block is its visible thought process.',
+    fix: 'Switch to a non-reasoning model (deepseek-v4-flash instead of the reasoner) or ignore/delete the think block. Nothing is broken.'
+  },
+  {
+    code: 'err-context-length',
+    match: /context length|maximum context|context_length_exceeded|too many tokens|reduce the length/i,
+    title: 'The chat is too long for the model',
+    cause: 'Janitor re-sends the whole conversation each message. Long chats plus a big character card can exceed the model\'s context window.',
+    fix: 'Lower the context size in Janitor\'s generation settings, use Chat Memory to summarise, or pick a model with a larger context window.'
+  }
+];
+
+function decodeError(text, status = null) {
+  const t = String(text || '');
+  const matches = [];
+  for (const rule of RULES) {
+    const statusOk = !rule.status || status == null || rule.status.includes(status);
+    const textHit = rule.match.test(t);
+    const statusHit = rule.status && status != null && rule.status.includes(status);
+    if ((textHit && statusOk) || (!textHit && statusHit && t.trim() === '')) {
+      matches.push(rule);
+    }
+  }
+  // Status-only fallback when text matched nothing
+  if (!matches.length && status != null) {
+    const byStatus = RULES.filter(r => r.status && r.status.includes(status));
+    matches.push(...byStatus);
+  }
+  return matches;
+}
+
+// Classify a live HTTP response (status + body text) into findings.
+function classifyResponse(status, bodyText, provider) {
+  const decoded = decodeError(bodyText, status);
+  if (status >= 200 && status < 300) {
+    return [{
+      severity: 'ok', code: 'live-ok', title: 'The provider answered successfully',
+      detail: 'A real chat completion request went through with this exact URL, key and model.',
+      fix: null
+    }];
+  }
+  if (decoded.length) {
+    return decoded.slice(0, 1).map(rule => ({
+      severity: rule.code === 'err-think-tags' || rule.code === 'err-403-moderation' ? 'info' : 'blocker',
+      code: rule.code,
+      title: rule.title,
+      detail: rule.cause,
+      fix: rule.fix
+    }));
+  }
+  return [{
+    severity: 'blocker', code: 'live-unknown-error',
+    title: `The provider answered with HTTP ${status}`,
+    detail: `Response: ${String(bodyText || '').slice(0, 300)}`,
+    fix: provider ? `Check ${provider.name}'s status page and docs; this response is unusual.` : 'Check the provider\'s docs; this response is unusual.'
+  }];
+}
+
+
+return { decodeError, classifyResponse, RULES };
+})();
+
+PM.livetest = (function () {
+const { classifyResponse } = PM.errordecode;
+// Live testing against the real provider, from the user's own browser.
+// The key travels ONLY from the user's browser to their provider. Nothing is logged.
+// fetchImpl is injectable for tests.
+
+async function timedFetch(fetchImpl, url, opts, timeoutMs = 20000) {
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
+  const started = Date.now();
+  try {
+    const res = await fetchImpl(url, { ...opts, signal: ctrl ? ctrl.signal : undefined });
+    return { res, ms: Date.now() - started, netError: null };
+  } catch (e) {
+    return { res: null, ms: Date.now() - started, netError: e };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+function authHeaders(provider, key) {
+  if (provider && provider.id === 'anthropic') {
+    return {
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+      'content-type': 'application/json'
+    };
+  }
+  return { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' };
+}
+
+// Fetch the provider's live model list. Returns {models: string[]|null, finding|null}
+async function fetchModelList(provider, key, fetchImpl = fetch) {
+  if (!provider || !provider.modelsUrl) return { models: null, finding: null };
+  const headers = key ? authHeaders(provider, key) : { 'Content-Type': 'application/json' };
+  const { res, netError } = await timedFetch(fetchImpl, provider.modelsUrl, { method: 'GET', headers }, 15000);
+  if (netError || !res || !res.ok) return { models: null, finding: null }; // model list is best-effort
+  try {
+    const data = await res.json();
+    const arr = Array.isArray(data) ? data : (data.data || data.models || []);
+    const ids = arr.map(m => (typeof m === 'string' ? m : (m.id || m.name || ''))).filter(Boolean)
+      .map(id => id.replace(/^models\//, ''));
+    return { models: ids.length ? ids : null, finding: null };
+  } catch {
+    return { models: null, finding: null };
+  }
+}
+
+// Run the real end-to-end test: one minimal chat completion.
+// Returns { findings: [], latencyMs, status }
+async function liveChatTest({ url, key, model, provider }, fetchImpl = fetch) {
+  const findings = [];
+  let body;
+  if (provider && provider.id === 'anthropic') {
+    body = JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] });
+  } else {
+    body = JSON.stringify({ model, messages: [{ role: 'user', content: 'hi' }], max_tokens: 1, stream: false });
+  }
+  const { res, ms, netError } = await timedFetch(fetchImpl, url, {
+    method: 'POST', headers: authHeaders(provider, key), body
+  });
+
+  if (netError) {
+    const aborted = netError && (netError.name === 'AbortError');
+    findings.push({
+      severity: 'blocker',
+      code: aborted ? 'live-timeout' : 'live-network-fail',
+      title: aborted ? 'The proxy did not answer within 20 seconds' : 'Could not reach the proxy from the browser',
+      detail: aborted
+        ? 'The server accepted the connection but never answered. Community reverse proxies do this when their upstream is dead or saturated.'
+        : (provider && provider.corsOk
+          ? `The browser could not complete the request (${netError.message || netError.name || 'network error'}). Since ${provider.name} allows browser access, this points at your network (VPN, firewall, DNS) or a typo in the URL.`
+          : `The browser could not complete the request (${netError.message || netError.name || 'network error'}). Either the host is down, the URL is wrong, or this server does not allow browser (CORS) access.`),
+      fix: aborted
+        ? 'Try again in a minute. If it keeps happening on a community proxy, the proxy is the problem, not your settings.'
+        : 'Double-check the URL for typos, try with any VPN toggled, and confirm the service is up.'
+    });
+    return { findings, latencyMs: ms, status: null };
+  }
+
+  let text = '';
+  try { text = await res.text(); } catch { /* body unreadable */ }
+  const classified = classifyResponse(res.status, text, provider);
+  for (const f of classified) findings.push(f);
+
+  if (res.status >= 200 && res.status < 300) {
+    findings.push({
+      severity: 'info', code: 'live-latency',
+      title: `Round trip: ${ms} ms`,
+      detail: ms > 8000
+        ? 'That is slow. Expect sluggish replies in chat; reasoning models and saturated proxies both cause this.'
+        : 'Latency looks healthy for chatting.',
+      fix: null
+    });
+  }
+  return { findings, latencyMs: ms, status: res.status };
+}
+
+// OpenRouter bonus: key limit/usage info (only OpenRouter exposes this to inference keys).
+async function fetchKeyInfo(provider, key, fetchImpl = fetch) {
+  if (!provider || provider.id !== 'openrouter' || !provider.keyInfoUrl) return null;
+  const { res, netError } = await timedFetch(fetchImpl, provider.keyInfoUrl, {
+    method: 'GET', headers: authHeaders(provider, key)
+  }, 10000);
+  if (netError || !res || !res.ok) return null;
+  try {
+    const data = await res.json();
+    const d = data.data || data;
+    return {
+      usage: d.usage ?? null,
+      limit: d.limit ?? null,
+      isFreeTier: d.is_free_tier ?? null,
+      limitRemaining: d.limit_remaining ?? null
+    };
+  } catch {
+    return null;
+  }
+}
+
+return { fetchModelList, liveChatTest, fetchKeyInfo };
+})();
+
+PM.report = (function () {
+const { fingerprintKey, fingerprintUrl, detectMismatch } = PM.fingerprint;
+const { checkUrl } = PM.urlcheck;
+const { checkModel } = PM.modelcheck;
+// Assemble the full static diagnosis and the corrected Janitor config.
+
+
+
+const SEV_ORDER = { blocker: 0, warning: 1, info: 2, ok: 3 };
+
+function sortFindings(findings) {
+  return [...findings].sort((a, b) => SEV_ORDER[a.severity] - SEV_ORDER[b.severity]);
+}
+
+// Static (no-network) diagnosis of the URL + key + model triple.
+function diagnose({ url, key, model }, { liveCatalog = null, now = Date.now() } = {}) {
+  const findings = [];
+
+  const keyFp = fingerprintKey(key);
+  const urlResult = checkUrl(url);
+  findings.push(...urlResult.findings);
+  const urlFp = urlResult.urlFp;
+
+  // Key-side findings
+  if (!keyFp.cleaned) {
+    findings.push({
+      severity: 'blocker', code: 'key-empty', title: 'No API key',
+      detail: 'The API key field is empty. Every provider requires one.',
+      fix: (urlFp.provider ? `Create one at ${urlFp.provider.keysPage}` : 'Create one on your provider\'s dashboard.')
+    });
+  } else {
+    if (keyFp.notes.includes('bearer-prefix')) {
+      findings.push({
+        severity: 'blocker', code: 'key-bearer', title: 'Remove "Bearer" from the key field',
+        detail: 'The key was pasted with the word "Bearer" in front. Janitor adds that automatically, so it gets sent twice and the provider rejects it.',
+        fix: 'Paste only the key itself, starting with its prefix (sk-, AIza, gsk_, ...).'
+      });
+    }
+    if (keyFp.notes.includes('whitespace') || keyFp.notes.includes('invisible-chars')) {
+      findings.push({
+        severity: 'warning', code: 'key-hidden-chars', title: 'Hidden characters around the key',
+        detail: 'The key had spaces or invisible characters attached (classic mobile copy bug). Providers reject keys that do not match exactly.',
+        fix: 'Delete the key in Janitor and re-paste it clean.'
+      });
+    }
+    if (keyFp.notes.includes('inner-whitespace')) {
+      findings.push({
+        severity: 'blocker', code: 'key-split', title: 'The key contains a space or line break',
+        detail: 'Keys are one unbroken string. A space in the middle usually means the copy grabbed a line wrap.',
+        fix: 'Re-copy the key from the provider dashboard in one selection.'
+      });
+    }
+    if (keyFp.provider && keyFp.confidence >= 2) {
+      findings.push({
+        severity: 'ok', code: 'key-recognised',
+        title: `Key format matches ${keyFp.provider.name}`,
+        detail: `Keys starting like this belong to ${keyFp.provider.name} (${keyFp.provider.keyHint}).`,
+        fix: null
+      });
+    }
+  }
+
+  // THE mismatch check
+  const mismatch = detectMismatch(keyFp, urlFp);
+  if (mismatch) {
+    findings.push({
+      severity: 'blocker', code: 'triple-mismatch',
+      title: `Your key is from ${mismatch.keyProvider.name} but the URL points at ${mismatch.urlProvider.name}`,
+      detail: `This is the single most common cause of Janitor's "network error". A ${mismatch.keyProvider.name} key only works against ${mismatch.keyProvider.name}'s own endpoint.`,
+      fix: `Either change the Proxy URL to ${mismatch.keyProvider.chatUrl} (keep your key), or get a ${mismatch.urlProvider.name} key at ${mismatch.urlProvider.keysPage} (keep your URL).`
+    });
+  }
+
+  // Model check runs against whichever provider we trust more: URL (that's who receives the request)
+  const effectiveProvider = urlFp.provider || (mismatch ? null : keyFp.provider) || null;
+  const modelResult = checkModel(model, urlFp.provider || null, liveCatalog, now);
+  findings.push(...modelResult.findings);
+
+  // Build corrected config
+  const provider = mismatch ? mismatch.keyProvider : effectiveProvider;
+  let corrected = null;
+  if (provider && !provider.notCompletionsShaped) {
+    let correctedModel = modelResult.corrected;
+    if (mismatch && correctedModel) {
+      // Model format may need translating to the key's provider
+      const mc = checkModel(correctedModel, provider, null, now);
+      correctedModel = mc.corrected || correctedModel;
+    }
+    corrected = {
+      providerName: provider.name,
+      url: provider.chatUrl,
+      model: correctedModel || (provider.modelSnapshot ? provider.modelSnapshot[0] : ''),
+      keyNote: keyFp.cleaned
+        ? (mismatch || !keyFp.provider || keyFp.provider.id === provider.id
+          ? 'your key, re-pasted with no spaces'
+          : `a ${provider.name} key from ${provider.keysPage}`)
+        : `a key from ${provider.keysPage}`
+    };
+  } else if (urlFp.kind === 'reverse-proxy' || urlFp.kind === 'unknown') {
+    corrected = {
+      providerName: 'your custom proxy',
+      url: urlResult.corrected || urlFp.cleaned,
+      model: modelResult.corrected || model || '',
+      keyNote: 'whatever key the proxy owner gave you'
+    };
+  }
+
+  const blockers = findings.filter(f => f.severity === 'blocker').length;
+  const warnings = findings.filter(f => f.severity === 'warning').length;
+  const verdict = blockers > 0 ? 'broken' : warnings > 0 ? 'shaky' : 'healthy';
+
+  return {
+    findings: sortFindings(findings),
+    verdict,
+    blockers,
+    warnings,
+    keyFp,
+    urlFp,
+    provider: effectiveProvider,
+    mismatch,
+    corrected
+  };
+}
+
+// Shareable plain-text summary for Reddit/Discord help threads. Never includes the key.
+function shareText(result, { url, model }) {
+  const lines = [];
+  lines.push('ProxyMedic diagnosis (proxymedic — free, runs in your browser, key never leaves it)');
+  lines.push(`URL: ${url || '(empty)'}`);
+  lines.push(`Model: ${model || '(empty)'}`);
+  lines.push(`Key: ${result.keyFp && result.keyFp.provider ? result.keyFp.provider.name + '-format key (redacted)' : '(redacted)'}`);
+  lines.push(`Verdict: ${result.verdict.toUpperCase()} — ${result.blockers} blocker(s), ${result.warnings} warning(s)`);
+  for (const f of result.findings) {
+    if (f.severity === 'blocker' || f.severity === 'warning') {
+      lines.push(`- [${f.severity.toUpperCase()}] ${f.title}`);
+    }
+  }
+  return lines.join('\n');
+}
+
+return { sortFindings, diagnose, shareText };
+})();
+
+// ProxyMedic UI. Browser-only; expects window.PM = {providers, fingerprint, urlcheck, modelcheck, errordecode, livetest, report}.
+(function () {
+  const PM = window.PM;
+  const $ = (id) => document.getElementById(id);
+
+  const els = {
+    tabs: document.querySelectorAll('.tab'),
+    panels: document.querySelectorAll('.panel'),
+    url: $('in-url'), key: $('in-key'), model: $('in-model'),
+    diagnose: $('btn-diagnose'), livetest: $('btn-livetest'),
+    results: $('results'), corrected: $('corrected'), share: $('btn-share'),
+    errText: $('in-error'), decode: $('btn-decode'), errResults: $('err-results')
+  };
+
+  let lastResult = null;
+  let liveCatalog = null;
+  let liveCatalogProvider = null;
+
+  // Remember URL + model (never the key).
+  try {
+    els.url.value = localStorage.getItem('pm.url') || '';
+    els.model.value = localStorage.getItem('pm.model') || '';
+  } catch { /* storage unavailable */ }
+
+  els.tabs.forEach(tab => tab.addEventListener('click', () => {
+    els.tabs.forEach(t => t.classList.toggle('active', t === tab));
+    els.panels.forEach(p => p.classList.toggle('active', p.id === tab.dataset.panel));
+  }));
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function linkify(s) {
+    return esc(s).replace(/(https?:\/\/[^\s,)]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--accent)">$1</a>');
+  }
+
+  function findingHtml(f) {
+    return `<div class="finding ${f.severity}">
+      <div class="f-title"><span class="sev ${f.severity}">${f.severity === 'ok' ? 'PASS' : f.severity.toUpperCase()}</span> ${esc(f.title)}</div>
+      ${f.detail ? `<div class="f-detail">${linkify(f.detail)}</div>` : ''}
+      ${f.fix ? `<div class="f-fix"><strong>Fix:</strong> ${linkify(f.fix)}</div>` : ''}
+    </div>`;
+  }
+
+  function verdictHtml(result) {
+    const map = {
+      broken: `Broken: ${result.blockers} blocker${result.blockers === 1 ? '' : 's'} found. Fix the red items below.`,
+      shaky: 'Works, but shaky. Check the yellow items before they bite.',
+      healthy: 'No problems found in the static checks. Run the live test to be sure.'
+    };
+    return `<div class="verdict ${result.verdict}">${map[result.verdict]}</div>`;
+  }
+
+  function correctedHtml(c) {
+    if (!c) return '';
+    const row = (k, v, copyable) => `<div class="copyrow"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>${copyable ? `<button data-copy="${esc(v)}">Copy</button>` : ''}</div>`;
+    return `<div class="card corrected">
+      <h3>Paste this into Janitor's proxy settings</h3>
+      <div class="sub">Fields match Janitor's "add configuration" form (${esc(c.providerName)}).</div>
+      ${row('Model', c.model, true)}
+      ${row('Proxy URL', c.url, true)}
+      ${row('API Key', c.keyNote, false)}
+    </div>`;
+  }
+
+  function bindCopyButtons(scope) {
+    scope.querySelectorAll('button[data-copy]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(btn.dataset.copy);
+          btn.textContent = 'Copied'; btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1600);
+        } catch { /* clipboard denied */ }
+      });
+    });
+  }
+
+  function runDiagnosis() {
+    const url = els.url.value, key = els.key.value, model = els.model.value;
+    try {
+      localStorage.setItem('pm.url', url);
+      localStorage.setItem('pm.model', model);
+    } catch { /* storage unavailable */ }
+    const catalog = (liveCatalogProvider && lastProviderId() === liveCatalogProvider) ? liveCatalog : null;
+    lastResult = PM.report.diagnose({ url, key, model }, { liveCatalog: catalog });
+    els.results.innerHTML = verdictHtml(lastResult) + lastResult.findings.map(findingHtml).join('');
+    els.corrected.innerHTML = correctedHtml(lastResult.corrected);
+    bindCopyButtons(els.corrected);
+    els.livetest.style.display = 'block';
+    els.share.style.display = 'block';
+    els.results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function lastProviderId() {
+    if (!lastResult) return null;
+    const p = lastResult.urlFp && lastResult.urlFp.provider;
+    return p ? p.id : null;
+  }
+
+  async function runLiveTest() {
+    if (!lastResult) return;
+    const url = els.url.value, key = els.key.value.trim().replace(/^bearer\s+/i, ''), model = els.model.value.trim();
+    const target = (lastResult.corrected && lastResult.corrected.url) ? lastResult.corrected.url : (lastResult.urlFp.cleaned.startsWith('http') ? lastResult.urlFp.cleaned : 'https://' + lastResult.urlFp.cleaned);
+    const targetModel = (lastResult.corrected && lastResult.corrected.model) || model;
+    // validate against the provider actually being tested (the corrected target may follow the key, not the pasted URL)
+    const provider = PM.fingerprint.fingerprintUrl(target).provider || lastResult.urlFp.provider || null;
+
+    els.livetest.disabled = true;
+    els.livetest.innerHTML = '<span class="spinner"></span>Testing against the real API…';
+    const liveFindings = [];
+    try {
+      // 1. live model list (also refreshes the catalog for re-diagnosis)
+      if (provider) {
+        const ml = await PM.livetest.fetchModelList(provider, key);
+        if (ml.models) {
+          liveCatalog = ml.models; liveCatalogProvider = provider.id;
+          const mc = PM.modelcheck.checkModel(targetModel, provider, ml.models);
+          for (const f of mc.findings) if (f.code !== 'model-ok') liveFindings.push(f); else liveFindings.push({ ...f, title: f.title + ' (verified against the live model list)' });
+        }
+        // 2. OpenRouter key info
+        const ki = await PM.livetest.fetchKeyInfo(provider, key);
+        if (ki) {
+          liveFindings.push({
+            severity: 'info', code: 'live-keyinfo',
+            title: ki.isFreeTier ? 'OpenRouter says: free-tier account' : 'OpenRouter key is active',
+            detail: `Usage so far: $${Number(ki.usage || 0).toFixed(2)}${ki.limit != null ? ` · limit $${ki.limit}` : ''}${ki.isFreeTier ? ' · Free tier caps :free models at 50 requests/day.' : ''}`,
+            fix: null
+          });
+        }
+      }
+      // 3. the real end-to-end chat call
+      const r = await PM.livetest.liveChatTest({ url: target, key, model: targetModel, provider });
+      liveFindings.push(...r.findings);
+      if (target !== (els.url.value || '').trim() && lastResult.corrected) {
+        liveFindings.push({
+          severity: 'info', code: 'live-tested-corrected',
+          title: 'Tested the corrected URL, not the one you pasted',
+          detail: `The live test used ${target} (the corrected endpoint) with model "${targetModel}".`,
+          fix: null
+        });
+      }
+    } catch (e) {
+      liveFindings.push({ severity: 'blocker', code: 'live-crashed', title: 'Live test failed unexpectedly', detail: String(e && e.message || e), fix: null });
+    }
+    els.livetest.disabled = false;
+    els.livetest.textContent = 'Run live test again';
+    const block = document.createElement('div');
+    block.innerHTML = `<h3 style="margin:16px 0 8px;font-size:1rem">Live test</h3>` + PM.report.sortFindings(liveFindings).map(findingHtml).join('');
+    els.results.appendChild(block);
+    block.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function runDecode() {
+    const text = els.errText.value.trim();
+    if (!text) { els.errResults.innerHTML = ''; return; }
+    const rules = PM.errordecode.decodeError(text);
+    if (!rules.length) {
+      els.errResults.innerHTML = `<div class="finding info">
+        <div class="f-title"><span class="sev info">INFO</span> No known pattern matched</div>
+        <div class="f-detail">ProxyMedic did not recognise this error. Try the full diagnosis tab with your URL, key and model; the live test usually reveals the real cause.</div>
+      </div>`;
+      return;
+    }
+    els.errResults.innerHTML = rules.map(rule => findingHtml({
+      severity: rule.code === 'err-think-tags' || rule.code === 'err-403-moderation' ? 'info' : 'blocker',
+      title: rule.title, detail: rule.cause, fix: rule.fix
+    })).join('');
+  }
+
+  async function share() {
+    if (!lastResult) return;
+    const text = PM.report.shareText(lastResult, { url: els.url.value.trim(), model: els.model.value.trim() });
+    try {
+      await navigator.clipboard.writeText(text);
+      els.share.textContent = 'Copied! Paste it into your help thread';
+      setTimeout(() => { els.share.textContent = 'Copy diagnosis for a help thread (key redacted)'; }, 2200);
+    } catch { /* clipboard denied */ }
+  }
+
+  els.diagnose.addEventListener('click', runDiagnosis);
+  els.livetest.addEventListener('click', runLiveTest);
+  els.decode.addEventListener('click', runDecode);
+  els.share.addEventListener('click', share);
+  [els.url, els.key, els.model].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') runDiagnosis(); }));
+})();
+
+</script>
+</body>
+</html>

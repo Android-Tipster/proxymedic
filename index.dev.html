@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProxyMedic — find out exactly why your Janitor AI proxy isn't working</title>
+<meta name="description" content="Free proxy checker for Janitor AI and other roleplay sites. Paste your proxy URL, API key and model name; get told exactly what's wrong and how to fix it. 100% in your browser, your key never leaves it.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%A9%BA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">Proxy<span class="pm-cross">Medic</span></div>
+    <div class="tagline">Find out exactly why your Janitor AI proxy isn't working — in 10 seconds.</div>
+    <div class="privacy-pill">🔒 Runs 100% in your browser. Your API key never leaves it.</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="panel-diagnose">Diagnose my setup</div>
+    <div class="tab" data-panel="panel-error">Decode an error</div>
+  </div>
+
+  <div class="panel active" id="panel-diagnose">
+    <div class="card">
+      <label for="in-url">Proxy URL <span class="hint">— what you put in Janitor's "Proxy URL" field</span></label>
+      <input type="text" id="in-url" placeholder="https://openrouter.ai/api/v1/chat/completions" autocomplete="off" spellcheck="false">
+      <label for="in-key">API key <span class="hint">— checked locally, sent only to your own provider if you run the live test</span></label>
+      <input type="password" id="in-key" placeholder="sk-or-v1-…  /  sk-…  /  AIza…" autocomplete="off">
+      <label for="in-model">Model name <span class="hint">— exactly as typed in Janitor's "Model" field</span></label>
+      <input type="text" id="in-model" placeholder="deepseek/deepseek-v3.2" autocomplete="off" spellcheck="false">
+      <button class="btn" id="btn-diagnose">Diagnose</button>
+      <div class="live-note">Step 1 checks everything instantly without any network call.</div>
+    </div>
+    <div id="results"></div>
+    <div id="corrected"></div>
+    <button class="btn secondary" id="btn-livetest" style="display:none">Run live test (talks to your provider, costs at most 1 token)</button>
+    <button class="btn secondary share-btn" id="btn-share" style="display:none">Copy diagnosis for a help thread (key redacted)</button>
+  </div>
+
+  <div class="panel" id="panel-error">
+    <div class="card">
+      <label for="in-error">Paste the error you got <span class="hint">— from Janitor, or the provider's response</span></label>
+      <textarea id="in-error" placeholder='e.g. "A network error occurred, you may be rate limited or having connection issues" or {"error":{"message":"Insufficient Balance"}}'></textarea>
+      <button class="btn" id="btn-decode">Decode it</button>
+    </div>
+    <div id="err-results"></div>
+  </div>
+
+  <section class="explain">
+    <h2>Why do I keep getting "a network error occurred"?</h2>
+    <p>Janitor AI shows the same generic message for almost every proxy failure. Underneath, the cause is nearly always one of these:</p>
+    <ul>
+      <li><strong>Mismatched pieces</strong> — an API key from one provider with a URL from another (the #1 cause). A DeepSeek key cannot talk to openrouter.ai and vice versa.</li>
+      <li><strong>Wrong URL shape</strong> — the field needs the <em>full</em> endpoint ending in <span style="font-family:var(--mono)">/chat/completions</span>, not the base address, and it must be https.</li>
+      <li><strong>Stale model names</strong> — tutorials age fast. DeepSeek's "deepseek-chat" and "deepseek-reasoner" stop working on <strong>July 24, 2026</strong>; OpenRouter needs <span style="font-family:var(--mono)">vendor/model</span> format.</li>
+      <li><strong>Money, not settings</strong> — DeepSeek has no free tier (402 Insufficient Balance on fresh accounts), OpenRouter caps free models at 50 requests/day, Gemini's free quota resets daily.</li>
+      <li><strong>Hidden characters</strong> — mobile copy-paste loves to add spaces and invisible characters that make an otherwise perfect key fail.</li>
+    </ul>
+    <h2>Is it safe to paste my API key here?</h2>
+    <p>Yes. ProxyMedic is a static page with no server and no analytics. The static checks run entirely on your device. If you choose to run the live test, your browser talks <em>directly</em> to your own provider (the same thing Janitor does when you chat) — the key is never stored, logged, or sent anywhere else. The page is <a href="https://github.com/Android-Tipster/proxymedic" style="color:var(--accent)">open source</a>, so you can verify that.</p>
+    <h2>Which providers does it know?</h2>
+    <p>OpenRouter, DeepSeek, Google Gemini, Chutes, Groq, Mistral, OpenAI and Anthropic are recognised with full checks (key format, exact endpoint, live model list). Community reverse proxies are supported through the live test.</p>
+  </section>
+
+  <div class="promo">
+    <h3>While you're fixing your setup…</h3>
+    <p>Proxies break, models get retired, platforms change. If you have a companion or OC you'd hate to lose, keep their personality, memories and voice in a file <em>you</em> own — exportable to any platform (Character Card V2, Janitor, C.AI, system prompt).</p>
+    <a href="https://android-tipster.github.io/soulprint/" target="_blank" rel="noopener">Back up your companion with Soulprint →</a>
+  </div>
+
+  <footer>
+    <p>ProxyMedic is free and open source. <a href="https://github.com/Android-Tipster/proxymedic">GitHub</a> · Not affiliated with Janitor AI or any provider.</p>
+  </footer>
+</div>
+
+<script type="module">
+  import * as providers from './src/providers.js';
+  import * as fingerprint from './src/fingerprint.js';
+  import * as urlcheck from './src/urlcheck.js';
+  import * as modelcheck from './src/modelcheck.js';
+  import * as errordecode from './src/errordecode.js';
+  import * as livetest from './src/livetest.js';
+  import * as report from './src/report.js';
+  window.PM = { providers, fingerprint, urlcheck, modelcheck, errordecode, livetest, report };
+  await import('./src/app.js');
+</script>
+</body>
+</html>
